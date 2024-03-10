@@ -1,27 +1,34 @@
 // server.js
 const express = require("express");
 const cors = require("cors");
+const bcrypt = require("bcrypt");
 // create server
 const app = express();
 // import mongodb function
 const { User } = require("./model");
+const { tokens } = require("./tokens.js");
+const PREFIX = "/vue-admin-template/user";
 app.use(cors());
 //get request data from req.body
 app.use(express.json());
-const tokens = {
-  admin: {
-    token: "admin-token",
-  },
-  editor: {
-    token: "editor-token",
-  },
-};
-const PREFIX = "/vue-admin-template/user";
+
 /* Login */
 app.post(`${PREFIX}/login`, async (req, res) => {
+  const body = req.body;
+  const user = await User.findOne({ username: body.username });
+  if (!user) {
+    return res.send({ code: 422, message: "User not found!" });
+  }
+  const isPasswordValid = bcrypt.compareSync(body.password, user.password);
+  if (!isPasswordValid) {
+    return res.status(422).send({
+      message: "Invalid password",
+    });
+  }
   const token = tokens["admin"];
   res.send({ code: 20000, data: token });
 });
+
 /* User info */
 app.get(`${PREFIX}/info`, async (req, res) => {
   res.send({
@@ -35,6 +42,7 @@ app.get(`${PREFIX}/info`, async (req, res) => {
     },
   });
 });
+
 /* Logout  */
 app.post(`${PREFIX}/logout`, async (req, res) => {
   res.send({
@@ -42,6 +50,7 @@ app.post(`${PREFIX}/logout`, async (req, res) => {
     data: "success",
   });
 });
+
 /* Register  */
 app.post(`${PREFIX}/register`, async (req, res) => {
   const body = req.body;
@@ -65,5 +74,5 @@ app.post(`${PREFIX}/register`, async (req, res) => {
   }
 });
 app.listen(9528, () => {
-  console.log("http://localhost:9528");
+  console.log("Server is open on http://localhost:9528");
 });

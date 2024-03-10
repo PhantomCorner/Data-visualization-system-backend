@@ -1,21 +1,23 @@
-// 引入 mongoose 
-const mongoose = require('mongoose')
+//  mongoose
+const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
 
-// 连接数据库，自动新建 ExpressAuth 库
-mongoose.connect('mongodb://localhost:27017/')
+mongoose.connect("mongodb://localhost:27017/");
 
-// 建立用户表
 const UserSchema = new mongoose.Schema({
   username: {
     type: String,
-    unique: true
+    unique: true,
   },
   password: {
     type: String,
-  }
-})
+    set(val) {
+      return bcrypt.hashSync(val, 10);
+    },
+  },
+});
 
 // 建立用户数据库模型
-const User = mongoose.model('User', UserSchema)
+const User = mongoose.model("User", UserSchema);
 
-module.exports = { User }
+module.exports = { User };
