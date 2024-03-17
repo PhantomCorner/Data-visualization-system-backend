@@ -2,18 +2,20 @@
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
+const multer = require("multer");
+const fs = require("fs");
 // create server
 const app = express();
 // import mongodb function
-const { User } = require("./model");
+const { User, DataSource } = require("./model");
 const { tokens } = require("./tokens.js");
-const PREFIX = "/vue-admin-template/user";
+const PREFIX = "/vue-admin-template/api";
 app.use(cors());
 //get request data from req.body
 app.use(express.json());
 
 /* Login */
-app.post(`${PREFIX}/login`, async (req, res) => {
+app.post(`${PREFIX}/user/login`, async (req, res) => {
   const body = req.body;
   const user = await User.findOne({ username: body.username });
   if (!user) {
@@ -30,7 +32,7 @@ app.post(`${PREFIX}/login`, async (req, res) => {
 });
 
 /* User info */
-app.get(`${PREFIX}/info`, async (req, res) => {
+app.get(`${PREFIX}/user/info`, async (req, res) => {
   res.send({
     code: 20000,
     data: {
@@ -44,7 +46,7 @@ app.get(`${PREFIX}/info`, async (req, res) => {
 });
 
 /* Logout  */
-app.post(`${PREFIX}/logout`, async (req, res) => {
+app.post(`${PREFIX}/user/logout`, async (req, res) => {
   res.send({
     code: 20000,
     data: "success",
@@ -52,7 +54,7 @@ app.post(`${PREFIX}/logout`, async (req, res) => {
 });
 
 /* Register  */
-app.post(`${PREFIX}/register`, async (req, res) => {
+app.post(`${PREFIX}/user/register`, async (req, res) => {
   const body = req.body;
   const isDuplicate = await User.findOne({
     username: body.username,
@@ -73,6 +75,63 @@ app.post(`${PREFIX}/register`, async (req, res) => {
     );
   }
 });
+/* Upload  */
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "dataSource/");
+  },
+  filename: function (req, file, cb) {
+    console.log(file);
+    cb(null, file.originalname);
+  },
+});
+const upload = multer({ storage: storage });
+app.post(
+  `${PREFIX}/dataSource/upload`,
+  upload.single("file"),
+  async (req, res) => {
+    const fileData = {
+      filename: req.file.filename,
+      data: fs.readFileSync(req.file.path),
+      type: req.file.mimetype,
+    };
+    try {
+      DataSource.create({
+        fileName: fileData.filename,
+        data: fileData.data,
+        fileType: fileData.type,
+        //ISSUE HERE
+        //ISSUE HERE
+        //ISSUE HERE
+        uploadTime: Date.now(),
+      }).then(() => {
+        res.send({
+          code: 20000,
+          message: "Upload Success",
+        });
+      });
+    } catch (e) {}
+  }
+);
+/* Get current uploaded file  */
+app.get(`${PREFIX}/dataSource/allFile`, async (req, res) => {
+  let data = {
+    res: [],
+  };
+  DataSource.find({}).then((allFile) => {
+    allFile.forEach((item) => {
+      data.res.push({
+        fileName: item.fileName,
+        uploadTime: item.uploadTime,
+      });
+    });
+    res.send({
+      code: 20000,
+      data: data,
+    });
+  });
+});
+
 app.listen(9528, () => {
   console.log("Server is open on http://localhost:9528");
 });

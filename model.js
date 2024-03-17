@@ -16,8 +16,24 @@ const UserSchema = new mongoose.Schema({
     },
   },
 });
+const DataSourceSchema = new mongoose.Schema({
+  fileName: {
+    type: String,
+    unique: true,
+  },
+  data: {
+    type: Buffer,
+  },
+  uploadTime: {
+    type: String,
+  },
+  fileType: {
+    type: String,
+  },
+});
 
-// 建立用户数据库模型
+//
 const User = mongoose.model("User", UserSchema);
+const DataSource = mongoose.model("DataSource", DataSourceSchema);
 
-module.exports = { User };
+module.exports = { User, DataSource };
