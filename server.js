@@ -4,9 +4,8 @@ const cors = require("cors");
 const bcrypt = require("bcrypt");
 const multer = require("multer");
 const fs = require("fs");
-// create server
 const app = express();
-// import mongodb function
+const AWS = require("aws-sdk");
 const { User, DataSource } = require("./model");
 const { tokens } = require("./tokens.js");
 const PREFIX = "/vue-admin-template/api";
@@ -94,16 +93,14 @@ app.post(
       filename: req.file.filename,
       data: fs.readFileSync(req.file.path),
       type: req.file.mimetype,
+      uploadTime: new Date().toISOString(),
     };
     try {
       DataSource.create({
         fileName: fileData.filename,
         data: fileData.data,
         fileType: fileData.type,
-        //ISSUE HERE
-        //ISSUE HERE
-        //ISSUE HERE
-        uploadTime: Date.now(),
+        uploadTime: fileData.uploadTime,
       }).then(() => {
         res.send({
           code: 20000,
@@ -115,20 +112,30 @@ app.post(
 );
 /* Get current uploaded file  */
 app.get(`${PREFIX}/dataSource/allFile`, async (req, res) => {
-  let data = {
-    res: [],
+  let s3 = new AWS.S3({
+    apiVersion: "2006-03-01",
+    accessKeyId: require("./ak.js").ak,
+    secretAccessKey: require("./ak.js").ask,
+    region: "ap-southeast-2",
+  });
+  var params = {
+    Bucket: "compx576-bucket",
+    Delimiter: "/",
+    Prefix: "",
   };
-  DataSource.find({}).then((allFile) => {
-    allFile.forEach((item) => {
-      data.res.push({
-        fileName: item.fileName,
-        uploadTime: item.uploadTime,
+
+  s3.listObjects(params, function (err, data) {
+    if (err) {
+      res.send({
+        code: 422,
+        message: err.message,
       });
-    });
-    res.send({
-      code: 20000,
-      data: data,
-    });
+    } else {
+      res.send({
+        code: 20000,
+        data: data.Contents,
+      });
+    }
   });
 });
 
