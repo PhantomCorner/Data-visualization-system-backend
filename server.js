@@ -9,9 +9,17 @@ const AWS = require("aws-sdk");
 const { User, DataSource } = require("./model");
 const { tokens } = require("./tokens.js");
 const PREFIX = "/vue-admin-template/api";
+const XLSX = require("xlsx");
 app.use(cors());
 //get request data from req.body
 app.use(express.json());
+
+let s3 = new AWS.S3({
+  apiVersion: "2006-03-01",
+  accessKeyId: require("./ak.js").ak,
+  secretAccessKey: require("./ak.js").ask,
+  region: "ap-southeast-2",
+});
 
 /* Login */
 app.post(`${PREFIX}/user/login`, async (req, res) => {
@@ -112,18 +120,11 @@ app.post(
 );
 /* Get current uploaded file  */
 app.get(`${PREFIX}/dataSource/allFile`, async (req, res) => {
-  let s3 = new AWS.S3({
-    apiVersion: "2006-03-01",
-    accessKeyId: require("./ak.js").ak,
-    secretAccessKey: require("./ak.js").ask,
-    region: "ap-southeast-2",
-  });
   var params = {
     Bucket: "compx576-bucket",
     Delimiter: "/",
     Prefix: "",
   };
-
   s3.listObjects(params, function (err, data) {
     if (err) {
       res.send({
@@ -134,6 +135,27 @@ app.get(`${PREFIX}/dataSource/allFile`, async (req, res) => {
       res.send({
         code: 20000,
         data: data.Contents,
+      });
+    }
+  });
+});
+/* Get file content */
+app.post(`${PREFIX}/dataSource/getFile`, async (req, res) => {
+  let params = { Bucket: "compx576-bucket", Key: `${req.body.key}` };
+  s3.getObject(params, function (err, data) {
+    if (err) {
+      res.send({
+        code: 422,
+        message: err.message,
+      });
+    } else {
+      const workbook = XLSX.read(data.Body, { type: "buffer" });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      res.send({
+        code: 20000,
+        data: jsonData,
       });
     }
   });
