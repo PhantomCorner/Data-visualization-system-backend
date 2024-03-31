@@ -1,39 +1,21 @@
-//  mongoose
-const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
+const mysql = require("mysql");
 
-mongoose.connect("mongodb://localhost:27017/");
-
-const UserSchema = new mongoose.Schema({
-  username: {
-    type: String,
-    unique: true,
-  },
-  password: {
-    type: String,
-    set(val) {
-      return bcrypt.hashSync(val, 10);
-    },
-  },
+const pool = mysql.createPool({
+  host: "compx576-userdb.cjsuck0osxyz.ap-southeast-2.rds.amazonaws.com",
+  user: "admin",
+  password: require("./ak").dbPWD,
+  port: 3306,
+  database: "user",
 });
-const DataSourceSchema = new mongoose.Schema({
-  fileName: {
-    type: String,
-    unique: true,
-  },
-  data: {
-    type: Buffer,
-  },
-  uploadTime: {
-    type: String,
-  },
-  fileType: {
-    type: String,
-  },
-});
+const query = (sql, params) =>
+  new Promise((resolve, reject) => {
+    pool.query(sql, params, (error, results) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve(results);
+    });
+  });
 
-//
-const User = mongoose.model("User", UserSchema);
-const DataSource = mongoose.model("DataSource", DataSourceSchema);
-
-module.exports = { User, DataSource };
+module.exports = { query };

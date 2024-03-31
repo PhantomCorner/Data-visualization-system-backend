@@ -2,11 +2,9 @@
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
-const multer = require("multer");
-const fs = require("fs");
 const app = express();
 const AWS = require("aws-sdk");
-const { User, DataSource } = require("./model");
+const { query } = require("./model.js");
 const { tokens } = require("./tokens.js");
 const PREFIX = "/vue-admin-template/api";
 const XLSX = require("xlsx");
@@ -20,19 +18,19 @@ let s3 = new AWS.S3({
   secretAccessKey: require("./ak.js").ask,
   region: "ap-southeast-2",
 });
-
 /* Login */
 app.post(`${PREFIX}/user/login`, async (req, res) => {
   const body = req.body;
-  const user = await User.findOne({ username: body.username });
+  const result = await query("SELECT * FROM user WHERE username = ?", [
+    body.username,
+  ]);
+  const user = result[0];
   if (!user) {
     return res.send({ code: 422, message: "User not found!" });
   }
-  const isPasswordValid = bcrypt.compareSync(body.password, user.password);
+  const isPasswordValid = await bcrypt.compare(body.password, user.password);
   if (!isPasswordValid) {
-    return res.status(422).send({
-      message: "Invalid password",
-    });
+    return res.status(422).send({ message: "Invalid password" });
   }
   const token = tokens["admin"];
   res.send({ code: 20000, data: token });
@@ -63,61 +61,34 @@ app.post(`${PREFIX}/user/logout`, async (req, res) => {
 /* Register  */
 app.post(`${PREFIX}/user/register`, async (req, res) => {
   const body = req.body;
-  const isDuplicate = await User.findOne({
-    username: body.username,
-  });
-  if (isDuplicate) {
-    res.send({
-      code: 422,
-      message: "Duplicate User!",
-    });
-  } else {
-    User.create({ username: body.username, password: body.password }).then(
-      () => {
-        res.send({
-          code: 20000,
-          message: "Register Success",
-        });
-      }
+  try {
+    const users = await query(
+      "SELECT COUNT(*) AS count FROM user WHERE username = ?",
+      [body.username]
     );
-  }
-});
-/* Upload  */
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "dataSource/");
-  },
-  filename: function (req, file, cb) {
-    console.log(file);
-    cb(null, file.originalname);
-  },
-});
-const upload = multer({ storage: storage });
-app.post(
-  `${PREFIX}/dataSource/upload`,
-  upload.single("file"),
-  async (req, res) => {
-    const fileData = {
-      filename: req.file.filename,
-      data: fs.readFileSync(req.file.path),
-      type: req.file.mimetype,
-      uploadTime: new Date().toISOString(),
-    };
-    try {
-      DataSource.create({
-        fileName: fileData.filename,
-        data: fileData.data,
-        fileType: fileData.type,
-        uploadTime: fileData.uploadTime,
-      }).then(() => {
-        res.send({
-          code: 20000,
-          message: "Upload Success",
-        });
+    if (users[0].count > 0) {
+      return res.send({
+        code: 422,
+        message: "Duplicate User!",
       });
-    } catch (e) {}
+    } else {
+      await query("INSERT INTO user (username, password) VALUES (?, ?)", [
+        body.username,
+        await bcrypt.hash(body.password, 10),
+      ]);
+      res.send({
+        code: 20000,
+        message: "Register Success",
+      });
+    }
+  } catch (error) {
+    console.error("Database operation failed:", error);
+    res.send({
+      code: 500,
+      message: "Database operation failed",
+    });
   }
-);
+});
 /* Get current uploaded file  */
 app.get(`${PREFIX}/dataSource/allFile`, async (req, res) => {
   var params = {
