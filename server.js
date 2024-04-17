@@ -9,9 +9,9 @@ const { tokens } = require("./tokens.js");
 const PREFIX = "/vue-admin-template/api";
 const XLSX = require("xlsx");
 app.use(cors());
-//get request data from req.body
 app.use(express.json());
 
+/* AWS S3 */
 let s3 = new AWS.S3({
   apiVersion: "2006-03-01",
   accessKeyId: require("./ak.js").ak,
@@ -43,8 +43,7 @@ app.get(`${PREFIX}/user/info`, async (req, res) => {
     data: {
       roles: ["admin"],
       introduction: "I am a super administrator",
-      avatar:
-        "https://www.waikato.ac.nz/__data/assets/image/0003/661710/Vertical,-full-colour-logo,-on-white-background-1.jpg",
+      avatar: "https://pic.616pic.com/ys_img/00/04/45/B98tg4SeIs.jpg",
       name: "Testing",
     },
   });
@@ -129,6 +128,14 @@ app.post(`${PREFIX}/dataSource/getFile`, async (req, res) => {
         data: jsonData,
       });
     }
+  });
+});
+/* Get chart preview image */
+app.get(`${PREFIX}/dataSource/chartPreview/all`, async (req, res) => {
+  let all = require("./chartIMG.js").chartIMG;
+  res.send({
+    code: 20000,
+    data: all,
   });
 });
 
