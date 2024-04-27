@@ -131,11 +131,21 @@ app.post(`${PREFIX}/dataSource/getFile`, async (req, res) => {
   });
 });
 /* Get chart preview image */
-app.get(`${PREFIX}/dataSource/chartPreview/all`, async (req, res) => {
+app.get(`${PREFIX}/chartGen/chartPreview/all`, async (req, res) => {
   let all = require("./chartIMG.js").chartIMG;
   res.send({
     code: 20000,
     data: all,
+  });
+});
+
+/* Get chart option  */
+app.post(`${PREFIX}/chartGen/chartOption`, async (req, res) => {
+  chart = req.body.chart;
+  let option = require("./chartOption.js").chartOption[chart];
+  res.send({
+    code: 20000,
+    data: option,
   });
 });
 
