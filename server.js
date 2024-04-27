@@ -149,6 +149,43 @@ app.post(`${PREFIX}/chartGen/chartOption`, async (req, res) => {
   });
 });
 
+/* Receive and store chart detail */
+app.post(`${PREFIX}/chartGen/passChartDetail`, async (req, res) => {
+  let chartOption = req.body.chartOption;
+  let chateName = req.body.chartName;
+  try {
+    await query("INSERT INTO chart (chartOption, chartName) VALUES (?, ?)", [
+      JSON.stringify(chartOption),
+      chateName,
+    ]);
+  } catch (error) {
+    console.error("Database operation failed:", error);
+    res.send({
+      code: 500,
+      message: "Database operation failed",
+    });
+  }
+  res.send({
+    code: 20000,
+    data: "Chart uploaded!",
+  });
+});
+/* Post all stored chart  */
+app.get(`${PREFIX}/chartGen/allCharts`, async (req, res) => {
+  try {
+    let charts = await query("SELECT * FROM chart");
+    res.send({
+      code: 20000,
+      data: charts,
+    });
+  } catch (error) {
+    console.error("Database operation failed:", error);
+    res.send({
+      code: 500,
+      message: "Database operation failed",
+    });
+  }
+});
 app.listen(9528, () => {
   console.log("Server is open on http://localhost:9528");
 });
