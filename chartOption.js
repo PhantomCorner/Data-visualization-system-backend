@@ -1,5 +1,5 @@
 const chartOption = {
-  Basic_Line_Chart: {
+  Line_chart: {
     xAxis: {
       type: "category",
       data: null,
@@ -56,7 +56,7 @@ const chartOption = {
       trigger: "axis",
     },
   },
-  Basic_Bar: {
+  Histogram: {
     xAxis: {
       type: "category",
       data: null,
@@ -88,7 +88,7 @@ const chartOption = {
       },
     ],
   },
-  Basic_Pie_Chart: {
+  Pie_chart: {
     // title: {
     //   text: "Referer of a Website",
     //   subtext: "Fake Data",
