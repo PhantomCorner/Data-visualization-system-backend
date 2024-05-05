@@ -126,6 +126,7 @@ app.post(`${PREFIX}/dataSource/getFile`, async (req, res) => {
       res.send({
         code: 20000,
         data: jsonData,
+        total: jsonData.length,
       });
     }
   });
