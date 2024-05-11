@@ -17,26 +17,7 @@ const chartOption = {
       trigger: "axis",
     },
   },
-  Smoothed_Line_Chart: {
-    xAxis: {
-      type: "category",
-      data: null,
-    },
-    yAxis: {
-      type: "value",
-    },
-    series: [
-      {
-        data: null,
-        type: "line",
-        smooth: true,
-      },
-    ],
-    tooltip: {
-      trigger: "axis",
-    },
-  },
-  Basic_area_chart: {
+  Area_chart: {
     xAxis: {
       type: "category",
       boundaryGap: false,
@@ -74,7 +55,7 @@ const chartOption = {
       trigger: "axis",
     },
   },
-  Tree_Map: {
+  Rectangular_tree_diagram: {
     series: [
       {
         type: "treemap",
@@ -124,7 +105,7 @@ const chartOption = {
       },
     ],
   },
-  Scatter: {
+  Scatter_chart: {
     xAxis: {},
     yAxis: {},
     series: [
