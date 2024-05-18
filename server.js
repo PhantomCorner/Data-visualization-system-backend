@@ -178,14 +178,25 @@ app.post(`${PREFIX}/chartGen/chartOption`, async (req, res) => {
 });
 
 /* Receive and store chart detail */
-app.post(`${PREFIX}/chartGen/passChartDetail`, async (req, res) => {
+app.post(`${PREFIX}/chartGen/uploadChart`, async (req, res) => {
   let chartOption = req.body.chartOption;
   let chateName = req.body.chartName;
+  let token = req.body.token;
+  let userid;
+  if (token == "admin-token") {
+    userid = 1;
+  } else {
+    userid = 2;
+  }
   try {
-    await query("INSERT INTO chart (chartOption, chartName) VALUES (?, ?)", [
-      JSON.stringify(chartOption),
-      chateName,
-    ]);
+    await query(
+      "INSERT INTO chart (userid, chartOption, chartName) VALUES (?, ?, ?)",
+      [userid, JSON.stringify(chartOption), chateName]
+    );
+    res.send({
+      code: 20000,
+      data: "Chart uploaded!",
+    });
   } catch (error) {
     console.error("Database operation failed:", error);
     res.send({
@@ -193,15 +204,18 @@ app.post(`${PREFIX}/chartGen/passChartDetail`, async (req, res) => {
       message: "Database operation failed",
     });
   }
-  res.send({
-    code: 20000,
-    data: "Chart uploaded!",
-  });
 });
-/* Post all stored chart  */
-app.get(`${PREFIX}/chartGen/allCharts`, async (req, res) => {
+/* Return all stored chart  */
+app.post(`${PREFIX}/chartGen/allCharts`, async (req, res) => {
+  let token = req.body.token;
+  let userid;
+  if (token == "admin-token") {
+    userid = 1;
+  } else {
+    userid = 2;
+  }
   try {
-    let charts = await query("SELECT * FROM chart");
+    let charts = await query("SELECT * FROM chart WHERE userid = ?", [userid]);
     res.send({
       code: 20000,
       data: charts,
