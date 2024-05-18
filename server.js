@@ -8,6 +8,7 @@ const { query } = require("./model.js");
 const { tokens } = require("./tokens.js");
 const PREFIX = "/vue-admin-template/api";
 const XLSX = require("xlsx");
+const e = require("express");
 app.use(cors());
 app.use(express.json());
 
@@ -21,6 +22,7 @@ let s3 = new AWS.S3({
 /* Login */
 app.post(`${PREFIX}/user/login`, async (req, res) => {
   const body = req.body;
+  let token;
   const result = await query("SELECT * FROM user WHERE username = ?", [
     body.username,
   ]);
@@ -32,21 +34,46 @@ app.post(`${PREFIX}/user/login`, async (req, res) => {
   if (!isPasswordValid) {
     return res.status(422).send({ message: "Invalid password" });
   }
-  const token = tokens["admin"];
-  res.send({ code: 20000, data: token });
+  if (body.username === "testUser123") {
+    token = tokens["admin"];
+    res.send({
+      code: 20000,
+      data: token,
+    });
+  } else {
+    token = tokens["editor"];
+    res.send({
+      code: 20000,
+      data: token,
+    });
+  }
 });
 
 /* User info */
 app.get(`${PREFIX}/user/info`, async (req, res) => {
-  res.send({
-    code: 20000,
-    data: {
-      roles: ["admin"],
-      introduction: "I am a super administrator",
-      avatar: "https://pic.616pic.com/ys_img/00/04/45/B98tg4SeIs.jpg",
-      name: "Testing",
-    },
-  });
+  console.log(req.query.token);
+  if (req.query.token === "admin-token") {
+    res.send({
+      code: 20000,
+      data: {
+        roles: ["admin"],
+        introduction: "I am a super administrator",
+        avatar: "https://pic.616pic.com/ys_img/00/04/45/B98tg4SeIs.jpg",
+        name: "testUser123",
+      },
+    });
+  } else {
+    res.send({
+      code: 20000,
+      data: {
+        roles: ["editor"],
+        introduction: "I am a editor",
+        avatar:
+          "https://images.unsplash.com/photo-1604998103924-89e012e5265a?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bGFuc2NhcGV8ZW58MHx8MHx8fDA%3D",
+        name: "qwer",
+      },
+    });
+  }
 });
 
 /* Logout  */
