@@ -34,7 +34,7 @@ app.post(`${PREFIX}/user/login`, async (req, res) => {
   if (!isPasswordValid) {
     return res.status(422).send({ message: "Invalid password" });
   }
-  if (body.username === "testUser123") {
+  if (body.username === "testUser1") {
     token = tokens["admin"];
     res.send({
       code: 20000,
@@ -51,15 +51,15 @@ app.post(`${PREFIX}/user/login`, async (req, res) => {
 
 /* User info */
 app.get(`${PREFIX}/user/info`, async (req, res) => {
-  console.log(req.query.token);
   if (req.query.token === "admin-token") {
     res.send({
       code: 20000,
       data: {
         roles: ["admin"],
         introduction: "I am a super administrator",
-        avatar: "https://pic.616pic.com/ys_img/00/04/45/B98tg4SeIs.jpg",
-        name: "testUser123",
+        avatar:
+          "https://images.pexels.com/photos/1619317/pexels-photo-1619317.jpeg?cs=srgb&dl=pexels-souvenirpixels-1619317.jpg&fm=jpg",
+        name: "testUser1",
       },
     });
   } else {
@@ -70,7 +70,7 @@ app.get(`${PREFIX}/user/info`, async (req, res) => {
         introduction: "I am a editor",
         avatar:
           "https://images.unsplash.com/photo-1604998103924-89e012e5265a?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bGFuc2NhcGV8ZW58MHx8MHx8fDA%3D",
-        name: "qwer",
+        name: "testUser2",
       },
     });
   }
@@ -115,13 +115,16 @@ app.post(`${PREFIX}/user/register`, async (req, res) => {
     });
   }
 });
-/* Get current uploaded file  */
+/* Get all datasource file  */
 app.get(`${PREFIX}/dataSource/allFile`, async (req, res) => {
   var params = {
-    Bucket: "compx576-bucket",
+    Bucket: "",
     Delimiter: "/",
     Prefix: "",
   };
+  req.query.token == "admin-token"
+    ? (params.Bucket = "compx576-user1-bucket")
+    : (params.Bucket = "compx576-user2-bucket");
   s3.listObjects(params, function (err, data) {
     if (err) {
       res.send({
@@ -138,7 +141,10 @@ app.get(`${PREFIX}/dataSource/allFile`, async (req, res) => {
 });
 /* Get file content */
 app.post(`${PREFIX}/dataSource/getFile`, async (req, res) => {
-  let params = { Bucket: "compx576-bucket", Key: `${req.body.key}` };
+  let params = { Bucket: "", Key: `${req.body.key}` };
+  req.body.token == "admin-token"
+    ? (params.Bucket = "compx576-user1-bucket")
+    : (params.Bucket = "compx576-user2-bucket");
   s3.getObject(params, function (err, data) {
     if (err) {
       res.send({
