@@ -190,9 +190,9 @@ app.post(`${PREFIX}/chartGen/uploadChart`, async (req, res) => {
   let token = req.body.token;
   let userid;
   if (token == "admin-token") {
-    userid = 1;
+    userid = 3;
   } else {
-    userid = 2;
+    userid = 4;
   }
   try {
     await query(
@@ -216,9 +216,9 @@ app.post(`${PREFIX}/chartGen/allCharts`, async (req, res) => {
   let token = req.body.token;
   let userid;
   if (token == "admin-token") {
-    userid = 1;
+    userid = 3;
   } else {
-    userid = 2;
+    userid = 4;
   }
   try {
     let charts = await query("SELECT * FROM chart WHERE userid = ?", [userid]);
@@ -234,6 +234,24 @@ app.post(`${PREFIX}/chartGen/allCharts`, async (req, res) => {
     });
   }
 });
+/* Drop dashboard chart by id */
+app.post(`${PREFIX}/dashboard/dropChart`, async (req, res) => {
+  const body = req.body;
+  try {
+    await query("DELETE FROM chart WHERE chartId = ?", [body.chartID]);
+    res.send({
+      code: 20000,
+      message: "Drop Success",
+    });
+  } catch (error) {
+    console.error("Database operation failed:", error);
+    res.send({
+      code: 500,
+      message: "Database operation failed",
+    });
+  }
+});
+
 app.listen(9528, () => {
   console.log("Server is open on http://localhost:9528");
 });
