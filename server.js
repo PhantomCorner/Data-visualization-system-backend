@@ -23,6 +23,7 @@ let s3 = new AWS.S3({
 app.post(`${PREFIX}/user/login`, async (req, res) => {
   const body = req.body;
   let token;
+  // check if user exists
   const result = await query("SELECT * FROM user WHERE username = ?", [
     body.username,
   ]);
@@ -51,12 +52,13 @@ app.post(`${PREFIX}/user/login`, async (req, res) => {
 
 /* User info */
 app.get(`${PREFIX}/user/info`, async (req, res) => {
+  // return user info by token
   if (req.query.token === "admin-token") {
     res.send({
       code: 20000,
       data: {
         roles: ["admin"],
-        introduction: "I am a super administrator",
+        introduction: "I am a admin",
         avatar:
           "https://images.pexels.com/photos/1619317/pexels-photo-1619317.jpeg?cs=srgb&dl=pexels-souvenirpixels-1619317.jpg&fm=jpg",
         name: "testUser1",
@@ -67,7 +69,7 @@ app.get(`${PREFIX}/user/info`, async (req, res) => {
       code: 20000,
       data: {
         roles: ["editor"],
-        introduction: "I am a editor",
+        introduction: "I am editor",
         avatar:
           "https://images.unsplash.com/photo-1604998103924-89e012e5265a?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bGFuc2NhcGV8ZW58MHx8MHx8fDA%3D",
         name: "testUser2",
@@ -122,6 +124,7 @@ app.get(`${PREFIX}/dataSource/allFile`, async (req, res) => {
     Delimiter: "/",
     Prefix: "",
   };
+  //seprate bucket by read token
   req.query.token == "admin-token"
     ? (params.Bucket = "compx576-user1-bucket")
     : (params.Bucket = "compx576-user2-bucket");
@@ -152,9 +155,11 @@ app.post(`${PREFIX}/dataSource/getFile`, async (req, res) => {
         message: err.message,
       });
     } else {
+      // read file content
       const workbook = XLSX.read(data.Body, { type: "buffer" });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
+      // convert to JSON and return
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
       res.send({
         code: 20000,
@@ -175,6 +180,7 @@ app.get(`${PREFIX}/chartGen/chartPreview/all`, async (req, res) => {
 
 /* Get chart option  */
 app.post(`${PREFIX}/chartGen/chartOption`, async (req, res) => {
+  // base on front end request, return chart option
   chart = req.body.chart;
   let option = require("./chartOption.js").chartOption[chart];
   res.send({
@@ -189,12 +195,14 @@ app.post(`${PREFIX}/chartGen/uploadChart`, async (req, res) => {
   let chateName = req.body.chartName;
   let token = req.body.token;
   let userid;
+  // store chart by user id
   if (token == "admin-token") {
     userid = 3;
   } else {
     userid = 4;
   }
   try {
+    // insert to database
     await query(
       "INSERT INTO chart (userid, chartOption, chartName) VALUES (?, ?, ?)",
       [userid, JSON.stringify(chartOption), chateName]
@@ -213,6 +221,7 @@ app.post(`${PREFIX}/chartGen/uploadChart`, async (req, res) => {
 });
 /* Return all stored chart  */
 app.post(`${PREFIX}/chartGen/allCharts`, async (req, res) => {
+  // get all chart data stored with the user id
   let token = req.body.token;
   let userid;
   if (token == "admin-token") {
@@ -238,6 +247,7 @@ app.post(`${PREFIX}/chartGen/allCharts`, async (req, res) => {
 app.post(`${PREFIX}/dashboard/dropChart`, async (req, res) => {
   const body = req.body;
   try {
+    // drop the chart by its id
     await query("DELETE FROM chart WHERE chartId = ?", [body.chartID]);
     res.send({
       code: 20000,
